@@ -96,6 +96,34 @@ addopts = "-q"
 line-length = 100
 target-version = "py311"
 
+
+
+# 1. Установка
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+
+# 2. Генерация синтетических данных (~58 000 строк, 40 SKU × 3 года)
+python scripts/generate_data.py
+
+# 3. Полный конвейер: признаки → CV → финальная модель → иерархия → запасы → артефакты
+python scripts/train.py
+
+# 4. Тесты
+pytest -q
+
+# 5. Поднять API
+./scripts/serve.sh
+# → http://localhost:8000/docs
+
+# 6. Проверить эндпоинты
+curl "http://localhost:8000/health"
+curl "http://localhost:8000/forecast?sku=SKU-001&horizon=28"
+curl "http://localhost:8000/inventory/SKU-001"
+curl "http://localhost:8000/segments"
+curl "http://localhost:8000/model-info"
+
+# 7. Docker
+docker compose up --build
 [tool.mypy]
 python_version = "3.11"
 ignore_missing_imports = true
